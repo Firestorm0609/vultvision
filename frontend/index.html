@@ -484,7 +484,7 @@ async function encodeAndShow(){
     const kb=Math.round(size/1024);
     document.getElementById('pvnote').textContent=`MP4 · ${kb < 1024 ? kb+'KB' : (kb/1024).toFixed(1)+'MB'} · auto-deletes in 48h`;
     document.getElementById('E').style.display='none';
-    document.getElementById('P').style.display='';
+    document.getElementById('P').style.display='block';
     setSt('');
     setRB(false);
   }catch(err){
