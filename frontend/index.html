@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VultVision – Animate Characters</title>
+<meta name="description" content="Bring cartoon characters to life with your voice. Record, animate, and download.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f0f13;color:#f0f0f0;min-height:100vh}
+
+/* ── Header ── */
+header{padding:16px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1e1e2a}
+.logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#6c47ff,#a855f7);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+header h1{font-size:18px;font-weight:600;letter-spacing:-.3px}
+header span{font-size:13px;color:#888;margin-left:auto}
+
+/* ── Layout ── */
+main{max-width:480px;margin:0 auto;padding:20px 16px 40px}
+
+/* ── Tool card ── */
+.card{background:#1a1a24;border:1px solid #2a2a38;border-radius:16px;overflow:hidden}
+
+/* ── Canvas ── */
+.cvwrap{background:#111118;display:flex;justify-content:center;padding:12px;position:relative}
+canvas{border-radius:10px;width:100%;max-width:340px;display:block}
+.rec-indicator{position:absolute;top:20px;right:24px;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.65);padding:4px 10px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .3s}
+.rec-indicator.show{opacity:1}
+.rec-dot{width:8px;height:8px;border-radius:50%;background:#ff3322;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ── Body ── */
+.bd{padding:16px}
+.sub{font-size:13px;color:#888;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+
+/* ── Tabs ── */
+.tabs{display:flex;border-bottom:1px solid #2a2a38;margin-bottom:14px}
+.tb{flex:1;background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;padding:9px 0;font-size:13px;color:#666;cursor:pointer;transition:color .15s}
+.tb.on{color:#a855f7;border-bottom-color:#a855f7}
+
+/* ── Char / BG grid ── */
+.row{display:flex;gap:9px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.row::-webkit-scrollbar{display:none}
+.cc{flex:0 0 82px;border:1px solid #2a2a38;border-radius:10px;padding:8px 5px;text-align:center;cursor:pointer;background:#111118;transition:border-color .15s,background .15s}
+.cc.on{border-color:#a855f7;background:#1f1430}
+.ce{font-size:26px;line-height:1.3}
+.cn{font-size:11px;color:#888;margin-top:3px}
+.cc.on .cn{color:#c084fc}
+.bc{flex:0 0 74px;border:1px solid #2a2a38;border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color .15s}
+.bc.on{border-color:#a855f7}
+.bs{height:48px}
+.bl{font-size:11px;text-align:center;padding:3px 2px;color:#888;background:#111118}
+.bc.on .bl{color:#c084fc}
+
+/* ── Size slider ── */
+.srow{display:flex;align-items:center;gap:10px}
+.sl{font-size:13px;color:#888;min-width:110px}
+.sv{font-size:13px;font-weight:500;min-width:44px;text-align:right;color:#f0f0f0}
+input[type=range]{accent-color:#a855f7}
+
+/* ── Audio section ── */
+.asec{border-top:1px solid #2a2a38;padding-top:14px;margin-top:10px}
+.stmsg{font-size:12px;text-align:center;color:#888;margin-bottom:8px;min-height:16px}
+.stmsg.rec{color:#ff6b6b}
+.stmsg.ok{color:#4ade80}
+.stmsg.err{color:#f87171}
+.rbtn{width:100%;border:none;border-radius:24px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:12px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.rbtn.idle{background:#a855f7;color:#fff}
+.rbtn.rec{background:#cc2200;color:#fff}
+.rbtn.enc{background:#2a2a38;color:#888;cursor:not-allowed}
+.erow{display:flex;align-items:center;justify-content:space-between}
+.elbl{font-size:13px;color:#ccc}
+.tg{width:42px;height:23px;border-radius:12px;cursor:pointer;display:flex;align-items:center;padding:0 2px;border:none;transition:background .2s}
+.tg.on{background:#a855f7}
+.tg.off{background:#3a3a4a}
+.tk{width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:transform .2s}
+.tg.on .tk{transform:translateX(19px)}
+
+/* ── Preview screen ── */
+#P{display:none;padding:20px 16px 40px;max-width:480px;margin:0 auto}
+.pvcard{background:#1a1a24;border:1px solid #2a2a38;border-radius:16px;overflow:hidden}
+video{width:100%;max-height:360px;background:#000;display:block}
+.pvbody{padding:16px}
+.pvtitle{font-size:15px;font-weight:600;margin-bottom:4px}
+.pvnote{font-size:12px;color:#888;margin-bottom:14px}
+.pvbtns{display:flex;gap:10px}
+.bdl{flex:1;background:#a855f7;color:#fff;border:none;border-radius:24px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none}
+.bbk{flex:1;background:#2a2a38;color:#ccc;border:none;border-radius:24px;padding:11px;font-size:14px;font-weight:600;cursor:pointer}
+.share-row{margin-top:12px;display:flex;gap:8px;align-items:center}
+.share-inp{flex:1;background:#111118;border:1px solid #2a2a38;border-radius:8px;padding:8px 10px;font-size:12px;color:#ccc;outline:none;cursor:text;font-family:monospace}
+.copy-btn{background:#2a2a38;color:#ccc;border:none;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;white-space:nowrap;transition:background .15s}
+.copy-btn:hover{background:#3a3a4a}
+
+/* ── Spinner ── */
+.spinner{width:20px;height:20px;border:2px solid #555;border-top-color:#a855f7;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Footer ── */
+footer{text-align:center;padding:24px 16px;font-size:12px;color:#444}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎭</div>
+  <h1>VultVision</h1>
+  <span>Animate characters</span>
+</header>
+
+<!-- Edit screen -->
+<main id="E">
+  <div class="card">
+    <div class="cvwrap">
+      <canvas id="cv" width="340" height="400"></canvas>
+      <div class="rec-indicator" id="rind">
+        <div class="rec-dot"></div>
+        <span id="rindtxt">0s</span>
+      </div>
+    </div>
+    <div class="bd">
+      <p class="sub">🎙 Speak to animate your character, then download as MP4.</p>
+      <div class="tabs">
+        <button class="tb on" data-t="C">Character</button>
+        <button class="tb" data-t="B">Background</button>
+        <button class="tb" data-t="S">Size</button>
+      </div>
+      <div id="pC"><div class="row" id="cl"></div></div>
+      <div id="pB" style="display:none"><div class="row" id="bl"></div></div>
+      <div id="pS" style="display:none">
+        <div class="srow">
+          <span class="sl">Character scale</span>
+          <input id="si" type="range" min="50" max="150" value="100" style="flex:1"
+            oninput="scl=+this.value;document.getElementById('sv').textContent=scl+'%'">
+          <span id="sv" class="sv">100%</span>
+        </div>
+      </div>
+      <div class="asec">
+        <p class="stmsg" id="st"></p>
+        <button class="rbtn idle" id="rb" onclick="toggleRec()">🎙 Record</button>
+        <div class="erow">
+          <span class="elbl">Enhance speech</span>
+          <button class="tg on" id="etg" onclick="enh=!enh;this.className='tg '+(enh?'on':'off')"
+            aria-label="Toggle enhance speech"><div class="tk"></div></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Preview screen -->
+<div id="P">
+  <div class="pvcard">
+    <video id="pv" controls playsinline></video>
+    <div class="pvbody">
+      <p class="pvtitle">Your character is ready!</p>
+      <p class="pvnote" id="pvnote">MP4 · shareable link below</p>
+      <div class="pvbtns">
+        <a class="bdl" id="dlbtn" href="#" download="vultvision-character.mp4">⬇ Download MP4</a>
+        <button class="bbk" onclick="back()">← Edit</button>
+      </div>
+      <div class="share-row">
+        <input class="share-inp" id="shareinp" readonly>
+        <button class="copy-btn" onclick="copyLink()">Copy link</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>VultVision &mdash; free to use &mdash; recordings auto-delete after 48 h</footer>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+let sc=0,sb=1,scl=100,mth=0,tm=0,enh=true,isRec=false,rs=0,rTmr=null;
+let anl=null,aC=null,mr=null,chks=[],aStr=null;
+const CN=['King','Wizard','Knight'],CE=['👑','🧙','⚔️'];
+const BN=['Dungeon','Castle','Forest','Plain'],BC=['#120505','#87CEEB','#3a7a3a','#f0f0f0'];
+
+// ── Star helper ────────────────────────────────────────────────────────────
+function star(cx,cy,r,r2,n){
+  ctx.beginPath();
+  for(let i=0;i<n;i++){
+    let a=i*2*Math.PI/n-Math.PI/2,a2=(i+.5)*2*Math.PI/n-Math.PI/2;
+    i===0?ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r):ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+    ctx.lineTo(cx+Math.cos(a2)*r2,cy+Math.sin(a2)*r2);
+  }
+  ctx.closePath();ctx.fill();
+}
+
+// ── Backgrounds ───────────────────────────────────────────────────────────
+function dBg(id){
+  if(id===0){
+    let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#120505');g.addColorStop(1,'#2e1208');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='#1a0808';ctx.lineWidth=1.5;
+    for(let r=0;r<H;r+=50){let off=r%100?25:0;for(let c=off;c<W;c+=70)ctx.strokeRect(c,r,70,50);}
+    [[W*.15,H*.3],[W*.85,H*.3]].forEach(([tx,ty])=>{
+      ctx.fillStyle='#8B4513';ctx.fillRect(tx-3,ty,6,22);
+      let gf=ctx.createRadialGradient(tx,ty,0,tx,ty,20);
+      gf.addColorStop(0,'#ffdd00aa');gf.addColorStop(.5,'#ff660088');gf.addColorStop(1,'transparent');
+      ctx.fillStyle=gf;ctx.beginPath();ctx.arc(tx,ty,20,0,Math.PI*2);ctx.fill();
+    });
+    ctx.fillStyle='#0a0404';ctx.fillRect(0,H*.83,W,H*.17);
+  } else if(id===1){
+    let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#87CEEB');g.addColorStop(1,'#d4eef9');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(255,255,255,.85)';
+    [[55,52,32],[175,35,26],[275,58,20]].forEach(([cx,cy,cr])=>{
+      ctx.beginPath();ctx.arc(cx,cy,cr,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(cx+cr*.8,cy+5,cr*.7,0,Math.PI*2);ctx.fill();
+    });
+    ctx.fillStyle='#A9A9A9';ctx.fillRect(W*.04,H*.38,W*.92,H*.44);
+    for(let bx=W*.04;bx<W*.96;bx+=32)ctx.fillRect(bx,H*.38-20,22,20);
+    ctx.fillStyle='#3d2010';
+    ctx.beginPath();ctx.moveTo(W/2-22,H*.82);ctx.lineTo(W/2-22,H*.56);ctx.arcTo(W/2-22,H*.48,W/2+22,H*.48,22);ctx.lineTo(W/2+22,H*.56);ctx.lineTo(W/2+22,H*.82);ctx.fill();
+    ctx.fillStyle='#cc3333';
+    for(let i=0;i<5;i++){let bx=W*.08+i*(W*.84/4);ctx.beginPath();ctx.moveTo(bx,H*.65);ctx.lineTo(bx+15,H*.73);ctx.lineTo(bx-15,H*.73);ctx.closePath();ctx.fill();}
+    ctx.fillStyle='#7a5a30';ctx.fillRect(0,H*.82,W,H*.18);
+  } else if(id===2){
+    let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#87CEEB');g.addColorStop(.55,'#b0e6a0');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#3a6e2a';ctx.fillRect(0,H*.72,W,H*.28);
+    function tr(tx,ty,ts){
+      ctx.fillStyle='#5C3A1E';ctx.fillRect(tx-ts*.08,ty,ts*.16,ts*.5);
+      ctx.fillStyle='#2d6a1e';ctx.beginPath();ctx.arc(tx,ty,ts*.38,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#3d8a2e';ctx.beginPath();ctx.arc(tx,ty-ts*.14,ts*.27,0,Math.PI*2);ctx.fill();
+    }
+    tr(W*.08,H*.5,85);tr(W*.18,H*.44,105);tr(W*.82,H*.5,85);tr(W*.93,H*.44,105);
+    ctx.fillStyle='#FFD700';ctx.beginPath();ctx.arc(W*.86,H*.1,19,0,Math.PI*2);ctx.fill();
+  } else {
+    ctx.fillStyle='#f5f5f5';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#e5e5e5';
+    for(let x=0;x<W;x+=35)for(let y=0;y<H;y+=35){ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle='#ddd';ctx.fillRect(0,H*.8,W,H*.2);
+  }
+}
+
+// ── Character: King ───────────────────────────────────────────────────────
+function dKing(m,ti){
+  ctx.strokeStyle='#5a1a1a';ctx.lineWidth=2;
+  ctx.fillStyle='#8B3030';
+  ctx.beginPath();ctx.moveTo(-44,-18);ctx.lineTo(44,-18);ctx.lineTo(52,78);ctx.lineTo(-52,78);ctx.closePath();ctx.fill();ctx.stroke();
+  [[-52,0,-.3],[52,0,.3]].forEach(([ex,ey,ea])=>{
+    ctx.fillStyle='#a03838';ctx.beginPath();ctx.ellipse(ex,ey,22,16,ea,0,Math.PI*2);ctx.fill();ctx.stroke();
+  });
+  ctx.fillStyle='#8B3030';
+  [[-44,0,-95,32,-90,50,-39,18],[44,0,95,32,90,50,39,18]].forEach(p=>{
+    ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(p[2],p[3]);ctx.lineTo(p[4],p[5]);ctx.lineTo(p[6],p[7]);ctx.closePath();ctx.fill();ctx.stroke();
+  });
+  ctx.fillStyle='#5C2800';
+  ctx.beginPath();ctx.ellipse(-92,42,13,11,.3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(92,42,13,11,-.3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#FFD700';star(0,18,10,5,5);
+  ctx.fillStyle='#3a1500';ctx.fillRect(-44,67,88,13);
+  ctx.fillStyle='#FFD700';ctx.fillRect(-10,69,20,9);
+  ctx.fillStyle='#c8a870';ctx.fillRect(-38,80,28,76);ctx.fillRect(10,80,28,76);
+  ctx.fillStyle='#8B3030';ctx.fillRect(-40,143,32,28);ctx.fillRect(8,143,32,28);
+  ctx.fillStyle='#5a1a1a';ctx.fillRect(-42,163,36,8);ctx.fillRect(6,163,36,8);
+  ctx.fillStyle='#5C2800';ctx.fillRect(-11,-29,22,14);
+  ctx.fillStyle='#5C2800';
+  ctx.beginPath();ctx.ellipse(0,-76,40,45,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#3a1500';ctx.stroke();
+  ctx.fillStyle='#1a1030';
+  ctx.beginPath();ctx.arc(0,-96,35,Math.PI,0);ctx.fill();
+  for(let i=-3;i<=3;i++){ctx.beginPath();ctx.arc(i*13,-112,14,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle='white';
+  ctx.beginPath();ctx.ellipse(-13,-82,11,13,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(13,-82,11,13,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.arc(-13,-81,6,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(13,-81,6,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='white';
+  ctx.beginPath();ctx.arc(-10,-84,2.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(16,-84,2.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#4a2010';ctx.beginPath();ctx.arc(0,-69,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#3a1508';
+  ctx.beginPath();ctx.arc(-3,-69,2,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(3,-69,2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1030';ctx.beginPath();ctx.ellipse(0,-56,13,9,0,0,Math.PI*2);ctx.fill();
+  let mh=m*13;
+  ctx.fillStyle='#1a0800';ctx.beginPath();ctx.ellipse(0,-62,13,Math.max(2,mh),0,0,Math.PI*2);ctx.fill();
+  if(m>.3){ctx.fillStyle='white';ctx.fillRect(-9,-65,18,5);}
+  ctx.strokeStyle='#3a1508';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.ellipse(0,-62,13,Math.max(2,mh),0,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='#FFD700';ctx.fillRect(-28,-126,56,18);
+  [-22,-10,0,10,22].forEach(px=>{
+    ctx.beginPath();ctx.moveTo(px-9,-126);ctx.lineTo(px,-148);ctx.lineTo(px+9,-126);ctx.closePath();ctx.fill();
+  });
+  [['#ff2222',-13],['#2222ff',0],['#22cc22',13]].forEach(([c,gx])=>{
+    ctx.fillStyle=c;ctx.beginPath();ctx.arc(gx,-119,4.5,0,Math.PI*2);ctx.fill();
+  });
+  ctx.strokeStyle='#b8860b';ctx.lineWidth=1.5;ctx.strokeRect(-28,-126,56,18);
+}
+
+// ── Character: Wizard ─────────────────────────────────────────────────────
+function dWiz(m,ti){
+  ctx.strokeStyle='#2d0050';ctx.lineWidth=2;
+  ctx.fillStyle='#4B0082';
+  ctx.beginPath();ctx.moveTo(-33,-18);ctx.lineTo(33,-18);ctx.lineTo(57,153);ctx.lineTo(-57,153);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#FFD700';
+  [[0,28],[-17,68],[17,98],[-7,128]].forEach(([sx,sy])=>{ctx.save();ctx.translate(sx,sy);star(0,0,9,4,5);ctx.restore();});
+  ctx.fillStyle='#4B0082';
+  ctx.beginPath();ctx.moveTo(-33,0);ctx.lineTo(-84,47);ctx.lineTo(-71,67);ctx.lineTo(-25,18);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(33,0);ctx.lineTo(84,47);ctx.lineTo(71,67);ctx.lineTo(25,18);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#f5deb3';ctx.beginPath();ctx.ellipse(-79,57,11,10,.3,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#8B4513';ctx.lineWidth=5;
+  ctx.beginPath();ctx.moveTo(75,52);ctx.lineTo(100,-96);ctx.stroke();
+  let gst=ctx.createRadialGradient(100,-96,0,100,-96,14);
+  gst.addColorStop(0,'#dd44ff');gst.addColorStop(1,'transparent');
+  ctx.fillStyle=gst;ctx.beginPath();ctx.arc(100,-96,14,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#9400D3';ctx.beginPath();ctx.arc(100,-96,9,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#f5deb3';ctx.strokeStyle='#c8a878';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.ellipse(0,-76,32,39,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle='white';
+  ctx.beginPath();ctx.ellipse(-12,-82,9,11,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(12,-82,9,11,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#6B3A1F';
+  ctx.beginPath();ctx.arc(-12,-81,5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(12,-81,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(-10,-84,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(14,-84,2,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#f5f5c0';ctx.lineWidth=5;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-19,-95);ctx.lineTo(-4,-92);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(19,-95);ctx.lineTo(4,-92);ctx.stroke();
+  ctx.strokeStyle='#c8a878';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(0,-74);ctx.lineTo(-5,-61);ctx.lineTo(5,-61);ctx.stroke();
+  let mh=m*11;
+  ctx.fillStyle='#c06000';ctx.beginPath();ctx.ellipse(0,-54,11,Math.max(2,mh),0,0,Math.PI*2);ctx.fill();
+  if(m>.3){ctx.fillStyle='white';ctx.fillRect(-7,-57,14,5);}
+  ctx.fillStyle='#f0f0c8';
+  ctx.beginPath();ctx.moveTo(-15,-52);ctx.lineTo(15,-52);ctx.lineTo(10,-7);ctx.lineTo(0,2);ctx.lineTo(-10,-7);ctx.closePath();ctx.fill();
+  let hw=Math.sin(ti*.002)*4;
+  ctx.fillStyle='#4B0082';ctx.strokeStyle='#2d0050';ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(0,-116,47,11,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-25,-116);ctx.lineTo(hw+8,-213);ctx.lineTo(25,-116);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#FFD700';ctx.save();ctx.translate(5,-165);star(0,0,9,4,5);ctx.restore();
+}
+
+// ── Character: Knight ─────────────────────────────────────────────────────
+function dKnight(m,ti){
+  ctx.strokeStyle='#3a4a5a';ctx.lineWidth=2;
+  ctx.fillStyle='#708090';
+  ctx.beginPath();ctx.moveTo(-40,-18);ctx.lineTo(40,-18);ctx.lineTo(48,82);ctx.lineTo(-48,82);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#8a9aaa';ctx.beginPath();ctx.ellipse(0,23,28,35,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#cc2222';ctx.fillRect(-4,2,8,30);ctx.fillRect(-13,11,26,8);
+  [[-50,0,-.3],[50,0,.3]].forEach(([ex,ey,ea])=>{
+    ctx.fillStyle='#606878';ctx.beginPath();ctx.ellipse(ex,ey,20,16,ea,0,Math.PI*2);ctx.fill();ctx.stroke();
+  });
+  ctx.fillStyle='#708090';
+  ctx.beginPath();ctx.moveTo(-40,0);ctx.lineTo(-84,32);ctx.lineTo(-79,51);ctx.lineTo(-36,17);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(40,0);ctx.lineTo(84,32);ctx.lineTo(79,51);ctx.lineTo(36,17);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#5a6a78';ctx.beginPath();ctx.ellipse(-82,41,12,10,.3,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#8B4513';ctx.fillRect(76,37,8,5);
+  ctx.fillStyle='#C0C0C0';ctx.fillRect(78,-77,4,115);
+  ctx.fillStyle='#FFD700';ctx.fillRect(71,33,20,6);
+  ctx.fillStyle='#333';ctx.fillRect(-43,70,86,13);
+  ctx.fillStyle='#FFD700';ctx.fillRect(-9,72,18,9);
+  ctx.fillStyle='#708090';ctx.fillRect(-36,84,28,74);ctx.fillRect(8,84,28,74);
+  ctx.fillStyle='#8a9aaa';
+  ctx.beginPath();ctx.ellipse(-22,116,13,9,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(22,116,13,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#4a5a68';ctx.fillRect(-38,148,32,26);ctx.fillRect(6,148,32,26);
+  ctx.fillStyle='#3a4a58';ctx.fillRect(-40,165,36,9);ctx.fillRect(4,165,36,9);
+  ctx.fillStyle='#708090';ctx.fillRect(-10,-30,20,15);
+  ctx.fillStyle='#708090';ctx.beginPath();ctx.arc(0,-76,39,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#3a4a5a';ctx.fillRect(-23,-84,46,18);
+  ctx.fillStyle='#708090';ctx.fillRect(-20,-80,16,5);ctx.fillRect(4,-80,16,5);
+  let pw=Math.sin(ti*.004)*8;
+  ctx.fillStyle='#cc2222';
+  ctx.beginPath();ctx.moveTo(-4,-115);ctx.quadraticCurveTo(18+pw,-165,4+pw,-195);ctx.quadraticCurveTo(-6+pw,-165,4,-115);ctx.closePath();ctx.fill();
+  let mh=m*7;
+  ctx.fillStyle='#1a2a30';ctx.beginPath();ctx.ellipse(0,-61,13,Math.max(1.5,mh),0,0,Math.PI*2);ctx.fill();
+}
+
+// ── Render loop ───────────────────────────────────────────────────────────
+function render(){
+  tm+=16;
+  if(anl){
+    let d=new Uint8Array(anl.frequencyBinCount);
+    anl.getByteFrequencyData(d);
+    let avg=d.reduce((a,b)=>a+b,0)/d.length;
+    mth=mth*.45+Math.min(1,avg/55)*.55;
+  } else { mth*=.88; }
+  dBg(sb);
+  ctx.save();
+  ctx.translate(W/2,H*.75);
+  let s=(scl/100)*.55;
+  ctx.scale(s,s);
+  ctx.translate(0,Math.sin(tm*.003)*5);
+  if(sc===0)dKing(mth,tm);
+  else if(sc===1)dWiz(mth,tm);
+  else dKnight(mth,tm);
+  ctx.restore();
+  requestAnimationFrame(render);
+}
+
+// ── UI builders ───────────────────────────────────────────────────────────
+function mkCL(){
+  let el=document.getElementById('cl');el.innerHTML='';
+  CN.forEach((n,i)=>{
+    let d=document.createElement('div');
+    d.className='cc'+(i===sc?' on':'');
+    d.innerHTML=`<div class="ce">${CE[i]}</div><div class="cn">${n}</div>`;
+    d.onclick=()=>{sc=i;mkCL();};el.appendChild(d);
+  });
+}
+function mkBL(){
+  let el=document.getElementById('bl');el.innerHTML='';
+  BN.forEach((n,i)=>{
+    let d=document.createElement('div');
+    d.className='bc'+(i===sb?' on':'');
+    d.innerHTML=`<div class="bs" style="background:${BC[i]}"></div><div class="bl">${n}</div>`;
+    d.onclick=()=>{sb=i;mkBL();};el.appendChild(d);
+  });
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tb').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.tb').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    let t=b.dataset.t;
+    ['C','B','S'].forEach(x=>document.getElementById('p'+x).style.display=x===t?'':'none');
+  });
+});
+
+// ── Recording ─────────────────────────────────────────────────────────────
+async function startRec(){
+  try{
+    aStr=await navigator.mediaDevices.getUserMedia({audio:true});
+    aC=new (window.AudioContext||window.webkitAudioContext)();
+    let src=aC.createMediaStreamSource(aStr);
+    anl=aC.createAnalyser();anl.fftSize=256;src.connect(anl);
+    let cvS=cv.captureStream(30);
+    let cmb=new MediaStream([...cvS.getTracks(),...aStr.getTracks()]);
+    chks=[];
+    let mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')?'video/webm;codecs=vp8,opus':
+             MediaRecorder.isTypeSupported('video/webm')?'video/webm':'';
+    mr=new MediaRecorder(cmb,mime?{mimeType:mime}:{});
+    mr.ondataavailable=e=>{if(e.data.size>0)chks.push(e.data);};
+    mr.onstop=()=>encodeAndShow();
+    mr.start();isRec=true;rs=0;
+    setRB();setSt('🔴 Recording — speak now!','rec');
+    document.getElementById('rind').classList.add('show');
+    rTmr=setInterval(()=>{
+      rs++;
+      document.getElementById('rindtxt').textContent=rs+'s';
+      setSt(`🔴 ${rs}s / 30s max`,'rec');
+      if(rs>=30)stopRec();
+    },1000);
+  }catch(e){setSt('⚠️ Mic access denied — please allow microphone.','err');}
+}
+
+function stopRec(){
+  clearInterval(rTmr);
+  mr?.stop();
+  anl=null;aC?.close();
+  aStr?.getTracks().forEach(t=>t.stop());
+  isRec=false;rs=0;
+  document.getElementById('rind').classList.remove('show');
+  setRB();
+}
+
+function toggleRec(){isRec?stopRec():startRec();}
+
+// ── Encode via backend ────────────────────────────────────────────────────
+async function encodeAndShow(){
+  setSt('⏳ Encoding to MP4…');
+  setRB(true); // disable button during encode
+
+  const blob=new Blob(chks,{type:'video/webm'});
+  const fd=new FormData();
+  fd.append('video',blob,'recording.webm');
+
+  try{
+    const res=await fetch('/api/encode',{method:'POST',body:fd});
+    if(!res.ok)throw new Error(`Server error ${res.status}`);
+    const {url,id,size}=await res.json();
+
+    // Show preview screen
+    const fullUrl='https://vultvision.me'+url;
+    document.getElementById('pv').src=url;
+    document.getElementById('dlbtn').href=url;
+    document.getElementById('shareinp').value=fullUrl;
+    const kb=Math.round(size/1024);
+    document.getElementById('pvnote').textContent=`MP4 · ${kb < 1024 ? kb+'KB' : (kb/1024).toFixed(1)+'MB'} · auto-deletes in 48h`;
+    document.getElementById('E').style.display='none';
+    document.getElementById('P').style.display='';
+    setSt('');
+    setRB(false);
+  }catch(err){
+    setSt('❌ Encoding failed — try again.','err');
+    setRB(false);
+    console.error(err);
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function setRB(disabled=false){
+  let b=document.getElementById('rb');
+  if(disabled){
+    b.className='rbtn enc';
+    b.innerHTML='<div class="spinner"></div> Encoding…';
+    return;
+  }
+  b.innerHTML=isRec?'⏹ Stop recording':'🎙 Record';
+  b.className='rbtn '+(isRec?'rec':'idle');
+}
+
+function setSt(msg,cls=''){
+  let e=document.getElementById('st');e.textContent=msg;e.className='stmsg'+(cls?' '+cls:'');
+}
+
+function back(){
+  document.getElementById('P').style.display='none';
+  document.getElementById('E').style.display='';
+  setSt('');setRB();
+}
+
+function copyLink(){
+  const inp=document.getElementById('shareinp');
+  navigator.clipboard.writeText(inp.value).then(()=>{
+    let btn=document.querySelector('.copy-btn');
+    btn.textContent='Copied!';
+    setTimeout(()=>btn.textContent='Copy link',2000);
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+mkCL();mkBL();render();
+</script>
+</body>
+</html>

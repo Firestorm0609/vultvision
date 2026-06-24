@@ -1,0 +1,41 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key:      ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+
+            REPO=/var/www/vultvision/repo
+            FRONT=/var/www/vultvision/frontend
+            BACK=/var/www/vultvision/backend
+
+            # Pull latest code
+            cd $REPO
+            git pull origin main
+
+            # Sync frontend
+            rsync -a --delete $REPO/frontend/ $FRONT/
+
+            # Sync & restart backend
+            rsync -a --delete $REPO/backend/ $BACK/
+            cd $BACK
+            npm install --omit=dev
+            pm2 restart vultvision || pm2 start server.js --name vultvision
+
+            echo "Deploy complete $(date)"
