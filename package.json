@@ -1,0 +1,27 @@
+{
+  "name": "vultfantasy",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.6.2",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.2.0",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^9.0.5",
+    "pg": "^8.23.0",
+    "tronweb": "^6.5.0",
+    "uuid": "^14.0.2"
+  }
+}

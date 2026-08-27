@@ -1,0 +1,19 @@
+{
+  "name": "VultFantasy — Fantasy Premier League with Crypto Rewards",
+  "short_name": "VultFantasy",
+  "description": "Build your dream Premier League squad, enter crypto pools, and win real USDT.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0e17",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "sports", "finance"]
+}
